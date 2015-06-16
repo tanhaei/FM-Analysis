@@ -6,7 +6,7 @@ sig Configuration {
 	features: set Feature
 }
 
-one sig root, A, B, C, D, F extends Feature{}
+one sig root, A, B, C extends Feature{}
 
 sig c extends Configuration{}
 
@@ -56,45 +56,22 @@ pred Removed (c:Configuration, sf:set Feature)
 }
 
 
-
 pred LHS (conf:Configuration)
 {
 	Mandatory[conf, root, A] 
 	Optional[conf, root, B+C] 
-	AlternativeGroup[conf, C, D+F] 
-	Excludes[conf, C, A]
 }
 
 
 pred RHS (conf:Configuration)
 {
-	Mandatory[conf, root, A]
-	Optional[conf, root, B]
-	Removed[conf, C+F+D]
+	Mandatory[conf, root, A+B]
+	Optional[conf, root, C]
 }
 
 assert  BehaviorPreserved {
 LHS[c] <=> RHS[c]
 }
-
-pred LLHS (conf:Configuration)
-{
-	Mandatory[conf, root, A] 
-	Optional[conf, root, B+C] 
-	Removed[conf, F+D]
-}
-
-
-pred RRHS (conf:Configuration)
-{
-	Mandatory[conf, root, B]
-	Optional[conf, root, C]
-	Removed[conf, F+D]
-}
-
-assert  BehaviorPreserved2 {
-LLHS[c] => RRHS[c]
-}
-check BehaviorPreserved2 for 2
+check BehaviorPreserved for 1
 
 
