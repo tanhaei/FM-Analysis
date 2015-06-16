@@ -1,0 +1,115 @@
+module FMRefactoring;
+create RModel : FFDMetaModel refining Model : FFDMetaModel;
+
+helper def : pullupName : String = 'featureName';
+
+helper def: getParent(Name : String) : FFDMetaModel!Feature =
+	FFDMetaModel!Feature.allInstances()->iterate(e; ii : Integer = 0 |
+		if e.operations->notEmpty() then 
+			e.operations->iterate(c; ii : Integer = 0 |
+			if c.name = Name then 
+				e
+			else
+				OclUndefined
+			endif) 
+		else
+			OclUndefined
+		endif);
+
+lazy rule PullUpFeature{ 
+	from
+	parent : FFDMetaModel!Feature,
+	ancestor : FFDMetaModel!Feature (
+	parent.name = thisModule.getParent(thisModule.pullupName).name and
+	ancestor.name = thisModule.getParent(parent.name))
+	to
+	r_parent : FFDMetaModel!Feature (
+		subFeatures <- parent.subFeatures
+			->select(c | c.name <> thisModule.pullupName)),
+	r_ancestor : FFDMetaModel!Feature ( subFeatures <- ancestor.subFeatures ->append(FFDMetaModel!Feature.allInstances() ->select(e | e.name = thisModule.pullupName))),
+	constraint : FFDMetaModel!Constraint (
+		name <- thisModule.pullupName + ' req ' + parent.name, type <- #Requires,
+		SrcFeature <- r_parent,
+		DestFeature <- FFDMetaModel!Feature.allInstances() ->select(e | e.name = thisModule.pullupName))
+}
+
+helper def : remvoveName : String = 'featureName';
+
+lazy rule RemoveFeature{ 
+	from 
+		feature : FFDMetaModel!Feature ,
+		constraints : FFDMetaModel!Constraint,
+		reqConstraints : FFDMetaModel!Constraint (
+			feature.name = thisModule.remvoveName and
+			constraints.SrcFeature.name = thisModule.remvoveName and
+			constraints.type = #Excludes and
+			constraints.DestFeature.name = thisModule.remvoveName and
+			constraints.type = #Requires and
+			constraints.DestFeature.name = thisModule.remvoveName)
+	to 
+	drop
+	do
+	{
+		for(subfeature in feature.subFeatures){
+			if(subfeature.oclIsKindOf(FFDMetaModel!Feature)) {
+				thisModule.remvoveName = subfeature.name;
+				thisModule.RemoveFeature(); }
+			else{
+				for(subsubfeature in subfeature) {
+				thisModule.remvoveName = subsubfeature.name;
+			thisModule.RemoveFeature(); }
+			} 
+		}
+		for(hasDependency in reqConstraints) {
+			thisModule.remvoveName = hasDependency.name;
+			thisModule.RemoveFeature(); }
+	}		
+}
+
+rule ExcludeCauseRemove{ from
+	f : FFDMetaModel!Feature, 
+	cons : FFDMetaModel!Constraint (
+		cons.type = #Excludes and ( f.subFeatures->exists(o|
+			o.oclIsKindOf(FFDMetaModel!Feature) and o.FeatureType = #Mandatory and
+			o.name = cons.SrcFeature.name) and
+			f.subFeatures->exists(o| o.oclIsKindOf(FFDMetaModel!Feature) and o.name = cons.DestFeature.name)
+			or f.subFeatures->exists(o|
+				o.oclIsKindOf(FFDMetaModel!Feature) and
+				o.name = cons.SrcFeature.name) and f.subFeatures->exists(o|
+				o.oclIsKindOf(FFDMetaModel!Feature) and o.FeatureType = #Mandatory and
+				o.name = cons.DestFeature.name)
+		) )
+to 
+do{
+	for (con in cons){
+			if(cons.DestFeature.type = #Mandatory){
+				thisModule.remvoveName = cons.SrcFeature.name;
+			}
+			else{
+				thisModule.remvoveName = cons.DestFeature.name;
+			}
+			thisModule.RemoveFeature();
+	}
+}
+}
+
+rule RequiresCauseRemove{ 
+	from 
+		cf : FFDMetaModel!CompoundFeature, 
+		cons : FFDMetaModel!Constraint (
+			cons.type = #Requires and
+			cf.subFeatures->exists(o|
+				o.FeatureType = #Alternative and
+				o.name = cons.SrcFeature.name)  and
+			cf.subFeatures->exists(o|
+				o.FeatureType = #Alternative and
+				o.name = cons.DestFeature.name)
+			)
+	to 
+	do{
+		for (con in cons){
+				thisModule.remvoveName =  cons.SrcFeature.name;
+				thisModule.RemoveFeature();
+			}	
+	  }
+}

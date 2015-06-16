@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="featuremodel" nsURI="http://featuremodel/1.0" nsPrefix="featuremodel">
+  <eClassifiers xsi:type="ecore:EEnum" name="ConstraintType">
+    <eLiterals name="Requires"/>
+    <eLiterals name="Excludes" value="1"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="FeatureModel" eSuperTypes="#//Constraint">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="EReference0" upperBound="-1"
+        eType="#//Constraint"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="" eType="#//FeatureModel"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="Constraints" upperBound="-1"
+        eType="#//Constraint" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="rootFeature" lowerBound="1"
+        eType="#//Feature" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Constraint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="type" lowerBound="1" eType="#//ConstraintType"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="SrcFeature" lowerBound="1"
+        eType="#//Feature"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="DestFeature" lowerBound="1"
+        eType="#//Feature"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="FeatureType">
+    <eLiterals name="Mandatory"/>
+    <eLiterals name="Optional" value="1"/>
+    <eLiterals name="Or" value="2"/>
+    <eLiterals name="Alternative" value="3"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Feature">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="isRoot" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="FeatureType" eType="#//FeatureType"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="EReference0" eType="#//Feature"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="subFeatures" upperBound="-1"
+        eType="#//Feature" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="subFeatures" upperBound="-1"
+        eType="#//CompounedFeature" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="CompounedFeature">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="FeatureType" lowerBound="1"
+        eType="#//FeatureType"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="subCompoundFeature" lowerBound="1"
+        upperBound="-1" eType="#//Feature" containment="true"/>
+  </eClassifiers>
+</ecore:EPackage>
